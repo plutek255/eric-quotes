@@ -1,78 +1,83 @@
-       name: Quote Manager
-        run: |
-          python3 << 'EOF'
-          import json, random, pathlib
-          from datetime import datetime
+name: Quote Manager
 
-          quotes_path = pathlib.Path("quotes.json")
-          md_path = pathlib.Path("quotes_readable.md")
-          qotd_path = pathlib.Path("qotd.txt")
+run: |
+  python3 << 'EOF'
+  import json
+  import pathlib
+  import random
+  from datetime import datetime
 
-          data = json.loads(quotes_path.read_text())
-          quotes = data.get("quotes", {})
+  quotes_path = pathlib.Path("quotes.json")
+  md_path = pathlib.Path("quotes_readable.md")
+  qotd_path = pathlib.Path("qotd.txt")
 
-          def format_date(d):
-              if not d or d in ("null", ""):
-                  return None
-              try:
-                  dt = datetime.fromisoformat(d.replace("Z", "+00:00"))
-                  return dt.strftime("%Y-%m-%d at %H:%M")
-              except Exception:
-                  return None
+  data = json.loads(quotes_path.read_text())
+  quotes = data.get("quotes", {})
 
-          lines = ["# Eric Quotes\n"]
-          footnotes = []
-          footnote_index = 1
+  def format_date(value):
+      if not value or value in ("null", ""):
+          return None
 
-          def add_footnote(text):
-              nonlocal footnote_index
-              footnotes.append(f"[^{footnote_index}]: {text}")
-              footnote_index += 1
-              return footnote_index - 1
+      try:
+          parsed_date = datetime.fromisoformat(
+              value.replace("Z", "+00:00")
+          )
+          return parsed_date.strftime("%Y-%m-%d at %H:%M")
+      except (TypeError, ValueError):
+          return None
 
-          for iso_date, entry in quotes.items():
-              quote = entry.get("name", "")
-              context = entry.get("context", "")
-              desc = entry.get("description", "")
-              author = entry.get("author", "Unknown")
+  lines = ["# Eric Quotes", ""]
+  footnotes = []
+  footnote_index = [1]
 
-              lines.append(f"## \"{quote}\"\n")
+  def add_footnote(text):
+      index = footnote_index[0]
+      footnotes.append(f"[^{index}]: {text}")
+      footnote_index[0] += 1
+      return index
 
-              # Date
-              formatted = format_date(iso_date)
-              if formatted:
-                  lines.append(f"**DATE:** {formatted}")
-              else:
-                  fn = add_footnote("This quote has no recorded date.")
-                  lines.append(f"*Date unknown* [^{fn}]")
+  for iso_date, entry in quotes.items():
+      quote = entry.get("name", "")
+      context = entry.get("context", "")
+      description = entry.get("description", "")
+      author = entry.get("author", "Unknown")
 
-              # Context
-              if context:
-                  fn = add_footnote(f"Context details: {context}")
-                  lines.append(f"**Context:** {context} [^{fn}]")
+      lines.append(f'## "{quote}"')
+      lines.append("")
 
-              lines.append("")  # spacing
+      formatted_date = format_date(iso_date)
 
-              # Description
-              if desc:
-                  fn = add_footnote(f"Description: {desc}")
-                  lines.append(f"> {desc} [^{fn}]\n")
+      if formatted_date:
+          lines.append(f"**DATE:** {formatted_date}")
+      else:
+          footnote = add_footnote("This quote has no recorded date.")
+          lines.append(f"*Date unknown* [^{footnote}]")
 
-              # Contributor footer
-              lines.append("---")
-              lines.append(f"<sub>Contributed by **{author}**</sub>\n")
+      if context:
+          footnote = add_footnote(f"Context details: {context}")
+          lines.append(f"**Context:** {context} [^{footnote}]")
 
-          # Append footnotes
-          if footnotes:
-              lines.append("\n---\n")
-              lines.extend(footnotes)
+      lines.append("")
 
-          md_path.write_text("\n".join(lines))
+      if description:
+          footnote = add_footnote(f"Description: {description}")
+          lines.append(f"> {description} [^{footnote}]")
+          lines.append("")
 
-          # Random quote selection
-          if quotes:
-              iso_date, entry = random.choice(list(quotes.items()))
-              qotd_path.write_text(entry.get("name", "No quote text"))
-          else:
-              qotd_path.write_text("No quotes found.")
-          EOF
+      lines.append("---")
+      lines.append(f"<sub>Contributed by **{author}**</sub>")
+      lines.append("")
+
+  if footnotes:
+      lines.append("---")
+      lines.append("")
+      lines.extend(footnotes)
+
+  md_path.write_text("\n".join(lines) + "\n")
+
+  if quotes:
+      _, entry = random.choice(list(quotes.items()))
+      qotd_path.write_text(entry.get("name", "No quote text"))
+  else:
+      qotd_path.write_text("No quotes found.")
+  EOF
