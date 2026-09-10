@@ -1,4 +1,4 @@
-      - name: Quote Manager
+       name: Quote Manager
         run: |
           python3 << 'EOF'
           import json, random, pathlib
