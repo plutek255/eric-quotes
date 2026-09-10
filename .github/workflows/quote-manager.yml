@@ -1,83 +1,110 @@
 name: Quote Manager
 
-run: |
-  python3 << 'EOF'
-  import json
-  import pathlib
-  import random
-  from datetime import datetime
+on:
+  push:
+  workflow_dispatch:
 
-  quotes_path = pathlib.Path("quotes.json")
-  md_path = pathlib.Path("quotes_readable.md")
-  qotd_path = pathlib.Path("qotd.txt")
+jobs:
+  update-quotes:
+    runs-on: ubuntu-latest
 
-  data = json.loads(quotes_path.read_text())
-  quotes = data.get("quotes", {})
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  def format_date(value):
-      if not value or value in ("null", ""):
-          return None
+      - name: Generate readable quotes
+        run: |
+          python3 << 'EOF'
+          import json
+          import pathlib
+          import random
+          from datetime import datetime
 
-      try:
-          parsed_date = datetime.fromisoformat(
-              value.replace("Z", "+00:00")
-          )
-          return parsed_date.strftime("%Y-%m-%d at %H:%M")
-      except (TypeError, ValueError):
-          return None
+          quotes_path = pathlib.Path("quotes.json")
+          md_path = pathlib.Path("quotes_readable.md")
+          qotd_path = pathlib.Path("qotd.txt")
 
-  lines = ["# Eric Quotes", ""]
-  footnotes = []
-  footnote_index = [1]
+          data = json.loads(quotes_path.read_text())
+          quotes = data.get("quotes", {})
 
-  def add_footnote(text):
-      index = footnote_index[0]
-      footnotes.append(f"[^{index}]: {text}")
-      footnote_index[0] += 1
-      return index
+          def format_date(value):
+              if not value or value in ("null", ""):
+                  return None
 
-  for iso_date, entry in quotes.items():
-      quote = entry.get("name", "")
-      context = entry.get("context", "")
-      description = entry.get("description", "")
-      author = entry.get("author", "Unknown")
+              try:
+                  parsed_date = datetime.fromisoformat(
+                      value.replace("Z", "+00:00")
+                  )
+                  return parsed_date.strftime("%Y-%m-%d at %H:%M")
+              except (TypeError, ValueError):
+                  return None
 
-      lines.append(f'## "{quote}"')
-      lines.append("")
+          lines = ["# Eric Quotes", ""]
+          footnotes = []
+          footnote_index = [1]
 
-      formatted_date = format_date(iso_date)
+          def add_footnote(text):
+              index = footnote_index[0]
+              footnotes.append(f"[^{index}]: {text}")
+              footnote_index[0] += 1
+              return index
 
-      if formatted_date:
-          lines.append(f"**DATE:** {formatted_date}")
-      else:
-          footnote = add_footnote("This quote has no recorded date.")
-          lines.append(f"*Date unknown* [^{footnote}]")
+          for iso_date, entry in quotes.items():
+              quote = entry.get("name", "")
+              context = entry.get("context", "")
+              description = entry.get("description", "")
+              author = entry.get("author", "Unknown")
 
-      if context:
-          footnote = add_footnote(f"Context details: {context}")
-          lines.append(f"**Context:** {context} [^{footnote}]")
+              lines.append(f'## "{quote}"')
+              lines.append("")
 
-      lines.append("")
+              formatted_date = format_date(iso_date)
 
-      if description:
-          footnote = add_footnote(f"Description: {description}")
-          lines.append(f"> {description} [^{footnote}]")
-          lines.append("")
+              if formatted_date:
+                  lines.append(f"**DATE:** {formatted_date}")
+              else:
+                  footnote = add_footnote("This quote has no recorded date.")
+                  lines.append(f"*Date unknown* [^{footnote}]")
 
-      lines.append("---")
-      lines.append(f"<sub>Contributed by **{author}**</sub>")
-      lines.append("")
+              if context:
+                  footnote = add_footnote(f"Context details: {context}")
+                  lines.append(f"**Context:** {context} [^{footnote}]")
 
-  if footnotes:
-      lines.append("---")
-      lines.append("")
-      lines.extend(footnotes)
+              lines.append("")
 
-  md_path.write_text("\n".join(lines) + "\n")
+              if description:
+                  footnote = add_footnote(f"Description: {description}")
+                  lines.append(f"> {description} [^{footnote}]")
+                  lines.append("")
 
-  if quotes:
-      _, entry = random.choice(list(quotes.items()))
-      qotd_path.write_text(entry.get("name", "No quote text"))
-  else:
-      qotd_path.write_text("No quotes found.")
-  EOF
+              lines.append("---")
+              lines.append(f"<sub>Contributed by **{author}**</sub>")
+              lines.append("")
+
+          if footnotes:
+              lines.append("---")
+              lines.append("")
+              lines.extend(footnotes)
+
+          md_path.write_text("\n".join(lines) + "\n")
+
+          if quotes:
+              _, entry = random.choice(list(quotes.items()))
+              qotd_path.write_text(entry.get("name", "No quote text"))
+          else:
+              qotd_path.write_text("No quotes found.")
+          EOF
+
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add quotes_readable.md qotd.txt
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update generated quote files"
+            git push
+          fi
