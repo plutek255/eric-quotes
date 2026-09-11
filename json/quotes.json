@@ -5,8 +5,12 @@
       "name" : "If you are being robbed, your parents are upstairs, and you are downstairs, say that your parents are deaf to make them louder so your parents can hear them.",
       "context" : "Contributed by Eric remotely",
       "description" : "No description"
-    } 
-  },
+    } ,
+	  "2026‑09‑09T12:08:00‑04:00" : {
+		  "name" : "IT'S NOT MY BIRTHDAY!" ,
+		  "context" : "Eric's friends have an inside joke since last year where they started saying 'happy birthday', because someone told one of the teachers and they proceeded to say 'Happy birthday, Eric!' over the loudspeaker." ,
+		  "description" : "The team now has a running joke that Eric's birthday is year-round, and Eric embraces it, though he used to hate being told 'happy birthday' every single day."
+  } ,
   "archive": {
     "wallet-and-keys": {
       "name": "HEY! THAT'S MY WALLET AND KEYS!",
