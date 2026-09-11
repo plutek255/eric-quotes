@@ -1,9 +1,13 @@
 {
-	"quotes" : {
-	
-	} ,
-	"archive" : {
-		"name" : "HEY! THAT'S MY WALLET AND KEYS!" ,
-		"context" : "Mason steals Eric's keys as a joke while they are running out on the track at school, during the time the year is almost about to end and they are in the final days." ,
-		"description" : "Considered to be where it all started, this quote is the legendary phrase being passed around by the Eric Quote maintatiners. This is among the first, and best, quotes from Eric."
+  "quotes": {
+	  
+  },
+  "archive": {
+    "wallet-and-keys": {
+      "name": "HEY! THAT'S MY WALLET AND KEYS!",
+      "context": "Mason steals Eric's keys as a joke while they are running out on the track at school, during the time the year is almost about to end and they are in the final days.",
+      "description": "Considered to be where it all started, this quote is the legendary phrase being passed around by the Eric Quote maintainers. This is among the first, and best, quotes from Eric.",
+      "author": "Eric"
+    }
+  }
 }
