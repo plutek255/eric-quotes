@@ -16,6 +16,8 @@
     } ,
 	  "life" : {
 		  "name" : "She'll be begging for her life!" ,
-		  "context" : "In the setting of gym class, when Eric heard Mason tell him 'Mrs. Gault is begging you for her assignment!' Eric accidentslly said this quote."
+		  "context" : "In the setting of gym class, when Eric heard Mason tell him 'Mrs. Gault is begging you for her assignment!' Eric accidentally said this quote." ,
+		  "description" : "No description" ,
+		  "author" : "Eric"
   }
 }
