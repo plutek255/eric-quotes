@@ -59,6 +59,10 @@ jobs:
 
       - name: Build website
         working-directory: website
+        env:
+          # This repository is a project Pages site, so assets need the
+          # /eric-quotes/ repository prefix.
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: pnpm build
 
       - name: Upload Pages artifact
