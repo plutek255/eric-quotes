@@ -4,6 +4,195 @@ on:
   push:
   workflow_dispatch:
   schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-quotes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whether QOTD was updated since yesterday at 23:55
+        id: qotd-check
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Use the last committed timestamp, not the checkout file mtime.
+          # GitHub-hosted runners can rewrite file mtimes during checkout.
+          yesterday_2355=$(date -d 'yesterday 23:55' +%s)
+          qotd_commit_time=$(git log -1 --format=%ct -- quotes/qotd.txt || true)
+
+          if [[ -n "$qotd_commit_time" && "$qotd_commit_time" -ge "$yesterday_2355" ]]; then
+            echo "qotd_updated=true" >> "$GITHUB_OUTPUT"
+            echo "quotes/qotd.txt was updated since yesterday at 23:55; the QOTD update will be skipped."
+          else
+            echo "qotd_updated=false" >> "$GITHUB_OUTPUT"
+            echo "quotes/qotd.txt was not updated since yesterday at 23:55; the QOTD update will run."
+          fi
+
+      - name: Generate quote and archive files
+        env:
+          UPDATE_QOTD: ${{ steps.qotd-check.outputs.qotd_updated != 'true' && '1' || '0' }}
+        run: |
+          python3 << 'EOF'
+          import json
+          import pathlib
+          import random
+          import re
+          import os
+          from datetime import datetime
+
+          root = pathlib.Path(".")
+          quotes_path = root / "json" / "quotes.json"
+          readable_quotes_path = root / "quotes" / "quotes_readable.md"
+          qotd_path = root / "quotes" / "qotd.txt"
+          archive_dir = root / "archive"
+
+          readable_quotes_path.parent.mkdir(parents=True, exist_ok=True)
+          archive_dir.mkdir(parents=True, exist_ok=True)
+
+          data = json.loads(quotes_path.read_text(encoding="utf-8"))
+          quotes = data.get("quotes", {})
+          archive = data.get("archive", {})
+
+          def format_date(value):
+              if not value or value in ("null", ""):
+                  return None
+              try:
+                  parsed_date = datetime.fromisoformat(
+                      str(value).replace("Z", "+00:00")
+                  )
+                  return parsed_date.strftime("%Y-%m-%d at %H:%M")
+              except (TypeError, ValueError):
+                  return None
+
+          def safe_filename(value, fallback):
+              value = str(value or fallback).strip().lower()
+              value = re.sub(r"[^a-z0-9._-]+", "-", value)
+              value = value.strip("-._")
+              return value or fallback
+
+          def normalize_entries(value):
+              if isinstance(value, dict):
+                  return list(value.items())
+              if isinstance(value, list):
+                  return [(str(index), entry) for index, entry in enumerate(value, start=1)]
+              return []
+
+          def format_quote(entry, footnotes, footnote_index, date_value=None):
+              entry = entry or {}
+              quote = entry.get("name", "Untitled quote")
+              context = entry.get("context", "")
+              description = entry.get("description", "")
+              author = entry.get("author", "Unknown")
+              formatted_date = format_date(date_value)
+              lines = [f'## "{quote}"', ""]
+
+              if formatted_date:
+                  lines.append(f"**DATE:** {formatted_date}")
+              else:
+                  footnotes.append(f"[^{footnote_index}]: This quote has no recorded date.")
+                  lines.append(f"*Date unknown* [^{footnote_index}]")
+                  footnote_index += 1
+
+              if context:
+                  footnotes.append(f"[^{footnote_index}]: Context details: {context}")
+                  lines.append(f"**Context:** {context} [^{footnote_index}]")
+                  footnote_index += 1
+
+              lines.append("")
+              if description:
+                  footnotes.append(f"[^{footnote_index}]: Description: {description}")
+                  lines.append(f"> {description} [^{footnote_index}]")
+                  footnote_index += 1
+                  lines.append("")
+
+              lines.append("---")
+              lines.append(f"<sub>Contributed by **{author}**</sub>")
+              lines.append("")
+              return lines, footnote_index
+
+          quote_lines = ["# Eric Quotes", ""]
+          quote_footnotes = []
+          footnote_index = 1
+          for quote_date, entry in normalize_entries(quotes):
+              formatted_lines, footnote_index = format_quote(
+                  entry, quote_footnotes, footnote_index,
+                  date_value=(entry or {}).get("date") or quote_date,
+              )
+              quote_lines.extend(formatted_lines)
+
+          if quote_footnotes:
+              quote_lines.extend(["", "---", ""])
+              quote_lines.extend(quote_footnotes)
+          readable_quotes_path.write_text("\n".join(quote_lines) + "\n", encoding="utf-8")
+
+          quote_entries = normalize_entries(quotes)
+          if os.environ.get("UPDATE_QOTD") == "1":
+              if quote_entries:
+                  _, entry = random.choice(quote_entries)
+                  qotd_path.write_text((entry or {}).get("name", "No quote text"), encoding="utf-8")
+              else:
+                  qotd_path.write_text("No quotes found.", encoding="utf-8")
+              print("updated quotes/qotd.txt")
+          else:
+              print("skipped quotes/qotd.txt because it was already updated since yesterday at 23:55")
+
+          for old_file in archive_dir.glob("*.md"):
+              old_file.unlink()
+
+          archive_entries = normalize_entries(archive)
+          for index, (_, entry) in enumerate(archive_entries, start=1):
+              archive_footnotes = []
+              formatted_lines, _ = format_quote(
+                  entry, archive_footnotes, 1,
+                  date_value=(entry or {}).get("date") if isinstance(entry, dict) else None,
+              )
+              archive_lines = formatted_lines
+              if archive_footnotes:
+                  archive_lines.extend(["", "---", ""])
+                  archive_lines.extend(archive_footnotes)
+              entry = entry or {}
+              filename_base = safe_filename(entry.get("name", f"Archived Quote {index}"), f"archive-{index}")
+              (archive_dir / f"{index:04d}-{filename_base}.md").write_text(
+                  "\n".join(archive_lines) + "\n", encoding="utf-8"
+              )
+
+          print(f"generated {len(quote_entries)} quotes")
+          print(f"generated {len(archive_entries)} archived quotes")
+          EOF
+
+      - name: Update CHANGELOG.md when QOTD changed
+        if: steps.qotd-check.outputs.qotd_updated != 'true'
+        run: python3 scripts/update_changelog.py quotes/qotd.txt CHANGELOG.md
+
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add quotes/ archive/ CHANGELOG.md
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update generated quote and archive files"
+            git push
+          fi
+name: Quote Manager
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
   - cron: "0 0 * * *"  
 
 jobs:
