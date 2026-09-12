@@ -21,7 +21,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      WEBSITE_ARCHIVE: eric-quotes-website.zip
+      WEBSITE_ARCHIVE: scripts/eric-quotes-website.zip
       WEBSITE_DIR: website
 
     steps:
