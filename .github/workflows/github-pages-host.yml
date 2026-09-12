@@ -1,0 +1,79 @@
+# GitHub Pages workflow for eric-quotes-website.zip.
+# Put this file at .github/workflows/host-website.yml in your repository,
+# and put eric-quotes-website.zip at the repository root.
+name: Host Eric Quotes website
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      WEBSITE_ARCHIVE: eric-quotes-website.zip
+      WEBSITE_DIR: website
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Extract website zip
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$WEBSITE_ARCHIVE"
+          rm -rf "$WEBSITE_DIR"
+          mkdir -p "$WEBSITE_DIR"
+          unzip -q "$WEBSITE_ARCHIVE" -d "$WEBSITE_DIR"
+          test -f "$WEBSITE_DIR/package.json"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Install website dependencies
+        working-directory: website
+        run: pnpm install --frozen-lockfile
+
+      - name: Build website
+        working-directory: website
+        run: pnpm build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
