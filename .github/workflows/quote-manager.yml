@@ -3,6 +3,12 @@ name: Quote Manager
 on:
   push:
   workflow_dispatch:
+    inputs:
+      force_update:
+        description: "Rotate Quote of the Day even if it was already updated recently"
+        required: false
+        default: false
+        type: boolean
   schedule:
     # GitHub cron is UTC. Check both 04:00 UTC (EDT) and 05:00 UTC (EST),
     # then the guard below allows only midnight America/New_York.
@@ -46,7 +52,7 @@ jobs:
         env:
           # Pushes regenerate the library and archive, but only the scheduled
           # midnight run rotates the Quote of the Day.
-          UPDATE_QOTD: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.qotd-check.outputs.qotd_updated != 'true' && '1' || '0' }}
+          UPDATE_QOTD: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (steps.qotd-check.outputs.qotd_updated != 'true' || inputs.force_update == true) && '1' || '0' }}
         run: |
           python3 << 'EOF'
           import json
