@@ -38,6 +38,18 @@ jobs:
           unzip -q "$WEBSITE_ARCHIVE" -d "$WEBSITE_DIR"
           test -f "$WEBSITE_DIR/package.json"
 
+      - name: Sync repository content into website
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Keep the published library, QOTD, and story in lockstep with the
+          # canonical repository sources on every deployment.
+          cp json/quotes.json "$WEBSITE_DIR/client/public/data/quotes.json"
+          cp quotes/qotd.txt "$WEBSITE_DIR/client/public/data/qotd.txt"
+          cp README.md "$WEBSITE_DIR/client/public/data/README.md"
+          test -s "$WEBSITE_DIR/client/public/data/quotes.json"
+          test -s "$WEBSITE_DIR/client/public/data/qotd.txt"
+
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
