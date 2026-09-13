@@ -23,23 +23,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check local schedule time
-        id: local-time
-        shell: bash
-        run: |
-          set -euo pipefail
-          local_hour=$(TZ=America/New_York date +%H)
-          if [[ "${{ github.event_name }}" != "schedule" || "$local_hour" == "00" ]]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-            echo "Running quote manager at New York local hour $local_hour."
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "Skipping this UTC schedule tick; New York local hour is $local_hour."
-          fi
-
       - name: Check whether QOTD was updated since yesterday at 23:55
         id: qotd-check
-        if: steps.local-time.outputs.run == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -58,9 +43,10 @@ jobs:
           fi
 
       - name: Generate quote and archive files
-        if: steps.local-time.outputs.run == 'true'
         env:
-          UPDATE_QOTD: ${{ steps.qotd-check.outputs.qotd_updated != 'true' && '1' || '0' }}
+          # Pushes regenerate the library and archive, but only the scheduled
+          # midnight run rotates the Quote of the Day.
+          UPDATE_QOTD: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.qotd-check.outputs.qotd_updated != 'true' && '1' || '0' }}
         run: |
           python3 << 'EOF'
           import json
@@ -191,11 +177,10 @@ jobs:
           EOF
 
       - name: Update CHANGELOG.md when QOTD changed
-        if: steps.local-time.outputs.run == 'true' && steps.qotd-check.outputs.qotd_updated != 'true'
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.qotd-check.outputs.qotd_updated != 'true'
         run: python3 scripts/update_changelog.py quotes/qotd.txt CHANGELOG.md
 
       - name: Commit generated files
-        if: steps.local-time.outputs.run == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
