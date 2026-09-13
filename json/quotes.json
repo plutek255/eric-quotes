@@ -1,42 +1,36 @@
 {
   "quotes": {
-    "2026-09-11T08:46:11-04:00": {
-      "author": "Eric",
-      "name": "If you are being robbed, your parents are upstairs, and you are downstairs, say that your parents are deaf to make them louder so your parents can hear them.",
-      "context": "No context",
-      "description": "No description"
-    },
-    "2026‑09‑09T12:08:00‑04:00": {
-      "name": "IT'S NOT MY BIRTHDAY!",
-      "context": "Eric's friends have an inside joke since last year where they started saying 'happy birthday', because someone told one of the teachers and they proceeded to say 'Happy birthday, Eric!' over the loudspeaker.",
-      "description": "The team now has a running joke that Eric's birthday is year-round, and Eric embraces it, though he used to hate being told 'happy birthday' every single day.",
-      "author": "Eric"
-    },
-    "2026-09-12T22:21:00-04:00": {
-      "name": "Show DK Bananza to a random stranger in 1996 who has an N64.",
-      "context": "No context",
-      "description": "No description",
-      "author": "Eric"
-    },
-    "2099-01-01T00:00:00-04:00": {
-      "author": "Eric",
-      "name": "PLACEHOLDER QUOTE — TEMPORARY VERIFICATION OBJECT",
-      "context": "Temporary deployment verification object.",
-      "description": "This placeholder is added only for a two-commit synchronization test."
-    }
-  },
+	 "2026-09-11T08:46:11-04:00" : {
+      "author" : "Eric",
+      "name" : "If you are being robbed, your parents are upstairs, and you are downstairs, say that your parents are deaf to make them louder so your parents can hear them.",
+      "context" : "No context",
+      "description" : "No description"
+    } ,
+	  "2026‑09‑09T12:08:00‑04:00" : {
+		  "name" : "IT'S NOT MY BIRTHDAY!" ,
+		  "context" : "Eric's friends have an inside joke since last year where they started saying 'happy birthday', because someone told one of the teachers and they proceeded to say 'Happy birthday, Eric!' over the loudspeaker." ,
+		  "description" : "The team now has a running joke that Eric's birthday is year-round, and Eric embraces it, though he used to hate being told 'happy birthday' every single day." ,
+		  "author" : "Eric"
+	  } ,
+	  "2026-09-12T22:21:00-04:00" : {
+		  "name" : "Show DK Bananza to a random stranger in 1996 who has an N64." ,
+		  "context" : "No context" ,
+		  "description" : "No description" ,
+		  "author" : "Eric"
+	  }
+  } ,
   "archive": {
     "wallet-and-keys": {
       "name": "HEY! THAT'S MY WALLET AND KEYS!",
       "context": "Mason steals Eric's keys as a joke while they are running out on the track at school, during the time the year is almost about to end and they are in the final days.",
       "description": "Considered to be where it all started, this quote is the legendary phrase being passed around by the Eric Quote maintainers. This is among the first, and best, quotes from Eric.",
       "author": "Eric"
-    },
-    "life": {
-      "name": "She'll be begging for her life!",
-      "context": "In the setting of gym class, when Eric heard Mason tell him 'Mrs. Gault is begging you for her assignment!' Eric accidentally said this quote.",
-      "description": "No description",
-      "author": "Eric"
-    }
+    } ,
+	  "life" : {
+		  "name" : "She'll be begging for her life!" ,
+		  "context" : "In the setting of gym class, when Eric heard Mason tell him 'Mrs. Gault is begging you for her assignment!' Eric accidentally said this quote." ,
+		  "description" : "No description" ,
+		  "author" : "Eric"
+	  }
   }
 }
