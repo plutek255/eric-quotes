@@ -183,7 +183,7 @@ jobs:
           EOF
 
       - name: Update CHANGELOG.md when QOTD changed
-        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && steps.qotd-check.outputs.qotd_updated != 'true'
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (steps.qotd-check.outputs.qotd_updated != 'true' || inputs.force_update == true)
         run: python3 scripts/update_changelog.py quotes/qotd.txt CHANGELOG.md
 
       - name: Commit generated files
