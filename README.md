@@ -18,3 +18,5 @@ This repository is under the [Apache license](LICENSE) and is available for comm
 
 
 [Go to quotes](json/quotes.json)
+
+[Open the website](https://plutek255.github.io/eric-quotes/)
