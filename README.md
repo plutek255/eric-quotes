@@ -14,4 +14,7 @@ This repository is under the [Apache license](LICENSE) and is available for comm
 
 `/archive/` - original Apple Notes list
 
-A **website** will soon be available to publicly showcase the quotes!
+
+
+
+[Go to quotes](json/quotes.json)
