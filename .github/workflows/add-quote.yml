@@ -1,0 +1,71 @@
+name: Add Quote
+
+on:
+  workflow_dispatch:
+    inputs:
+      quote_date:
+        description: "MM/DD/YYYY HH:MM"
+        required: true
+        type: string
+
+      name:
+        description: "Quote text"
+        required: true
+        type: string
+
+      author:
+        description: "Author"
+        required: true
+        default: "Eric"
+        type: string
+
+      context:
+        description: "Context"
+        required: false
+        default: "No context"
+        type: string
+
+      description:
+        description: "Description"
+        required: false
+        default: "No description"
+        type: string
+
+jobs:
+  add-quote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add quote
+        run: |
+          DATE_INPUT='${{ inputs.quote_date }}'
+
+          ISO_DATE=$(TZ=America/New_York date -d "$DATE_INPUT" '+%Y-%m-%dT%H:%M:%S%:z')
+
+          jq \
+            --arg date "$ISO_DATE" \
+            --arg author '${{ inputs.author }}' \
+            --arg name '${{ inputs.name }}' \
+            --arg context '${{ inputs.context }}' \
+            --arg description '${{ inputs.description }}' \
+            '
+            .quotes[$date] = {
+              author: $author,
+              name: $name,
+              context: $context,
+              description: $description
+            }
+            ' quotes.json > quotes.tmp
+
+          mv quotes.tmp quotes.json
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add quotes.json
+          git commit -m "Add quote" || exit 0
+          git push
