@@ -1,66 +1,33 @@
-name: Add Quote
-
-on:
-  workflow_dispatch:
-    inputs:
-      quote_date:
-        description: "MM/DD/YYYY HH:MM"
-        required: true
-        type: string
-
-      name:
-        description: "Quote text"
-        required: true
-        type: string
-
-      author:
-        description: "Author"
-        required: true
-        default: "Eric"
-        type: string
-
-      context:
-        description: "Context"
-        required: false
-        default: "No context"
-        type: string
-
-      description:
-        description: "Description"
-        required: false
-        default: "No description"
-        type: string
-
-jobs:
-  add-quote:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
       - name: Add quote
         shell: bash
+        env:
+          DATE_INPUT: ${{ inputs.quote_date }}
+          QUOTE_AUTHOR: ${{ inputs.author }}
+          QUOTE_NAME: ${{ inputs.name }}
+          QUOTE_CONTEXT: ${{ inputs.context }}
+          QUOTE_DESCRIPTION: ${{ inputs.description }}
         run: |
           set -euo pipefail
 
-          DATE_INPUT='${{ inputs.quote_date }}'
           QUOTES_FILE="json/quotes.json"
           TEMP_FILE="${QUOTES_FILE}.tmp"
 
           mkdir -p "$(dirname "$QUOTES_FILE")"
 
           if [ ! -f "$QUOTES_FILE" ]; then
-            echo '{"quotes":{}}' > "$QUOTES_FILE"
+            printf '%s\n' '{"quotes":{}}' > "$QUOTES_FILE"
           fi
 
-          ISO_DATE=$(TZ=America/New_York date -d "$DATE_INPUT" '+%Y-%m-%dT%H:%M:%S%:z')
+          ISO_DATE=$(
+            TZ=America/New_York date -d "$DATE_INPUT" '+%Y-%m-%dT%H:%M:%S%:z'
+          )
 
           jq \
             --arg date "$ISO_DATE" \
-            --arg author '${{ inputs.author }}' \
-            --arg name '${{ inputs.name }}' \
-            --arg context '${{ inputs.context }}' \
-            --arg description '${{ inputs.description }}' \
+            --arg author "$QUOTE_AUTHOR" \
+            --arg name "$QUOTE_NAME" \
+            --arg context "$QUOTE_CONTEXT" \
+            --arg description "$QUOTE_DESCRIPTION" \
             '
             .quotes[$date] = {
               author: $author,
@@ -71,12 +38,3 @@ jobs:
             ' "$QUOTES_FILE" > "$TEMP_FILE"
 
           mv "$TEMP_FILE" "$QUOTES_FILE"
-
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add json/quotes.json
-          git commit -m "Add quote" || exit 0
-          git push
