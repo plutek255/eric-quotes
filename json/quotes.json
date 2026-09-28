@@ -26,9 +26,15 @@
     },
     "2026-09-25T12:10:00-04:00": {
       "author": "Eric",
-      "name": "Its great to scream in lowercase to avoid popping your vocal cords.",
+      "name": "It's great to scream in lowercase to avoid popping your vocal cords.",
       "context": "No context",
       "description": "No description"
+    },
+    "2026-09-28T12:20:00-04:00" : {
+      "name" : "I'M GOING TO HOSPITALIZE YOU!",
+      "context" : "Deagan was telling Eric that Eric had an AI girlfriend.",
+      "description" : "Eric does not have an AI girlfriend.",
+      "author" : "Eric"   
     }
   },
   "archive": {
